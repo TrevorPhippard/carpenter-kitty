@@ -6,46 +6,61 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"gateway/graph/model"
-	utility "gateway/service"
+	pbconn "gateway/service"
+	"strconv"
 )
 
-// ReturnTime is the resolver for the ReturnTime field.
-func (r *queryResolver) ReturnTime(ctx context.Context) (*model.ReturnTime, error) {
-	str1 := "user_service"
-	str2 := "post_service"
-	str3 := "connection_service"
+// Query resolver: getUser
+func (r *queryResolver) GetUser(ctx context.Context, id string) (*model.User, error) {
+	numId, err := strconv.ParseUint(id, 10, 64)
 
-	return &model.ReturnTime{
-		UserService:       &str1,
-		PostService:       &str2,
-		ConnectionService: &str3,
+	resp, err := r.UserClient.GetUser(ctx, &pbconn.GetUserRequest{Id: numId})
+	if err != nil {
+		return nil, err
+	}
+
+	user := resp.User // assuming the field is called "User"
+	if user == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	return &model.User{
+		ID:    strconv.FormatUint(resp.User.Id, 10),
+		Name:  user.Name,
+		Email: user.Email,
 	}, nil
 }
 
-// UserService is the resolver for the user_service field.
-func (r *returnTimeResolver) UserService(ctx context.Context, obj *model.ReturnTime) (*string, error) {
-	str1 := utility.ClientConn("user-service:50051")
-	return &str1, nil
+// Query resolver: getPost
+func (r *queryResolver) GetPost(ctx context.Context, id string) (*model.Post, error) {
+	resp, err := r.PostClient.GetPost(ctx, &pbconn.PostId{Id: id})
+	if err != nil {
+		return nil, err
+	}
+
+	if resp == nil {
+		return nil, fmt.Errorf("post not found")
+	}
+
+	return &model.Post{
+		ID:           resp.Id,
+		AuthorID:     resp.AuthorId,
+		Text:         resp.Text,
+		Visibility:   resp.Visibility,
+		CommentCount: resp.CommentCount,
+		LikeCount:    resp.LikeCount,
+		ShareCount:   resp.ShareCount,
+	}, nil
 }
 
-// PostService is the resolver for the post_service field.
-func (r *returnTimeResolver) PostService(ctx context.Context, obj *model.ReturnTime) (*string, error) {
-	str2 := utility.ClientConn("post-service:50052")
-	return &str2, nil
-}
-
-// ConnectionService is the resolver for the connection_service field.
-func (r *returnTimeResolver) ConnectionService(ctx context.Context, obj *model.ReturnTime) (*string, error) {
-	str3 := utility.ClientConn("connection-service:50053")
-	return &str3, nil
+// GetConnections is the resolver for the getConnections field.
+func (r *queryResolver) GetConnections(ctx context.Context, userID string) ([]*model.UserConnection, error) {
+	panic(fmt.Errorf("not implemented: GetConnections - getConnections"))
 }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-// ReturnTime returns ReturnTimeResolver implementation.
-func (r *Resolver) ReturnTime() ReturnTimeResolver { return &returnTimeResolver{r} }
-
 type queryResolver struct{ *Resolver }
-type returnTimeResolver struct{ *Resolver }
