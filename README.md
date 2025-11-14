@@ -1,6 +1,4 @@
-![Xigadee](/docs/ck-logo-type.png)
-
-# Carpenter Kitty
+![carpenter-kitty_logo](https://github.com/TrevorPhippard/carpenter-kitty/blob/CK-MS-Documentation/backend/docs/ck-logo-type.png)
 
 ## 🚀 Overview
 
